@@ -1,0 +1,30 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="form-wrapper">
+    <div class="card">
+        <h3 style="margin-bottom: 15px; display: flex; align-items: center; gap: 8px;">
+            <i data-lucide="sliders"></i> System Settings & Configurations
+        </h3>
+        <form action="/save-config" method="POST">
+            <label for="snippets_dir">Global Snippets Folder Directory (Absolute Path)</label>
+            <input type="text" id="snippets_dir" name="snippets_dir" value="{{ raw_path_value }}" required>
+
+            <label for="per_page">Items Per Page Grid View</label>
+            <select id="per_page" name="per_page">
+                <option value="6" {% if per_page == 6 %}selected{% endif %}>6 Items</option>
+                <option value="12" {% if per_page == 12 %}selected{% endif %}>12 Items</option>
+                <option value="24" {% if per_page == 24 %}selected{% endif %}>24 Items</option>
+            </select>
+            
+            <div class="form-actions">
+                <button type="submit" class="btn-submit">
+                    <i data-lucide="save" style="width: 16px; height: 16px;"></i> Apply Modifications
+                </button>
+                <a href="{{ url_for('vault.index') }}" class="btn-cancel">
+                    <i data-lucide="ban" style="width: 16px; height: 16px;"></i> Cancel
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

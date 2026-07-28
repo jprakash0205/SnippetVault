@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Local Snippet Manager</title>
+    <!-- Links to external split stylesheet -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <script>
+        function copyToClipboard(text, btn) {
+            navigator.clipboard.writeText(text).then(() => {
+                const originalText = btn.innerText;
+                btn.innerText = '✓ Copied';
+                btn.style.backgroundColor = '#DEF7EC';
+                btn.style.color = '#03543F';
+                setTimeout(() => {
+                    btn.innerText = originalText;
+                    btn.style.backgroundColor = '';
+                    btn.style.color = '';
+                }, 1500);
+            });
+        }
+    </script>
+</head>
+<body>
+
+    <nav class="navbar">
+        <h1>📋 Snippet Vault</h1>
+    </nav>
+
+    <div class="main-container">
+        
+        <!-- Live System Folder Location Banner -->
+        <div class="path-banner">
+            <div><strong>Active Directory Path:</strong> {{ folder_path }}</div>
+        </div>
+
+        <!-- Master Two Column Dashboard Layout -->
+        <div class="workspace-grid">
+            
+            <!-- Left Command Panel Sidebar -->
+            <div class="sidebar-controls">
+                
+                <div class="card">
+                    <h3>Create Entry</h3>
+                    <form action="/add" method="POST">
+                        <label for="title">Title / Identifier</label>
+                        <input type="text" id="title" name="title" placeholder="e.g., Auth Middleware Pattern" required>
+
+                        <label for="category">Manual Category Override</label>
+                        <select id="category" name="category">
+                            <option value="General">General</option>
+                            <option value="Prompt">Prompt</option>
+                            <option value="Python">Python</option>
+                            <option value="JavaScript">JavaScript</option>
+                            <option value="SQL">SQL</option>
+                            <option value="Terminal">Terminal</option>
+                            <option value="HTML/CSS">HTML/CSS</option>
+                        </select>
+
+                        <label for="content">Snippet Content</label>
+                        <textarea id="content" name="content" rows="6" placeholder="Paste structural codes or core text..." required></textarea>
+
+                        <button type="submit" class="btn-primary">Save to System</button>
+                    </form>
+                </div>
+
+                <div class="card" style="background-color: #F8FAFC;">
+                    <h3>Admin Configuration</h3>
+                    <form action="/save-config" method="POST">
+                        <label for="snippets_dir">Custom Directory Path</label>
+                        <input type="text" id="snippets_dir" name="snippets_dir" value="{{ raw_path_value }}" placeholder="e.g., C:/Users/Name/Desktop/MySnippets" required>
+
+                        <label for="per_page">Items Per Page Grid View</label>
+                        <select id="per_page" name="per_page">
+                            <option value="6" {% if per_page == 6 %}selected{% endif %}>6 Items</option>
+                            <option value="12" {% if per_page == 12 %}selected{% endif %}>12 Items</option>
+                            <option value="24" {% if per_page == 24 %}selected{% endif %}>24 Items</option>
+                            <option value="48" {% if per_page == 48 %}selected{% endif %}>48 Items</option>
+                        </select>
+                        
+                        <button type="submit" class="btn-primary" style="background-color: #334155;">Apply Modifications</button>
+                    </form>
+                </div>
+
+            </div>
+
+            <!-- Right Snippet Browser Window -->
+            <div class="main-browser">
+                
+                <div class="card" style="padding: 16px 20px;">
+                    <form method="GET" action="/" style="margin:0; padding:0; display: flex; gap: 12px; border:none; box-shadow:none;">
+                        <input type="text" name="search" value="{{ q }}" placeholder="Search through items across categories, headers and codes..." style="margin:0;">
+                        <button type="submit" class="btn-primary" style="width: auto; white-space: nowrap; padding: 0 24px;">Filter Vault</button>
+                        {% if q %}
+                            <a href="/" style="align-self: center; color: #EF4444; font-size: 14px; font-weight:600; text-decoration: none; padding-left:4px;">Reset</a>
+                        {% endif %}
+                    </form>
+                </div>
+
+                <div class="snippet-grid">
+                    {% for item in snippets %}
+                    <div class="snippet-card">
+                        <div class="snippet-top">
+                            <div class="snippet-header">
+                                <div class="snippet-title" title="{{ item.title }}">{{ item.title }}</div>
+                                <span class="badge" data-cat="{{ item.type }}">{{ item.type }}</span>
+                            </div>
+                            <pre>{{ item.content }}</pre>
+                        </div>
+                        <div class="snippet-actions">
+                            <button class="btn-copy" onclick="copyToClipboard(`{{ item.content|js_escaped|default(item.content) }}`, this)">Copy Content</button>
+                            <a class="btn-delete" href="/delete/{{ item.filename }}" onclick="return confirm('Permanently wipe this local snippet?')">Delete</a>
+                        </div>
+                    </div>
+                    {% else %}
+                    <div style="grid-column: 1 / -1; padding: 40px; text-align: center; color: var(--text-muted); background: white; border: 1px dashed var(--border-color); border-radius: 12px;">
+                        No snippets found matching your query criteria.
+                    </div>
+                    {% endfor %}
+                </div>
+
+                {% if total_pages > 1 %}
+                <div class="pagination-container">
+                    <a class="page-link {% if page == 1 %}disabled{% endif %}" href="{{ url_for('index', page=page-1, search=q) }}">Previous</a>
+                    <span class="page-label">Page {{ page }} of {{ total_pages }}</span>
+                    <a class="page-link {% if page == total_pages %}disabled{% endif %}" href="{{ url_for('index', page=page+1, search=q) }}">Next</a>
+                </div>
+                {% endif %}
+
+            </div>
+        </div>
+    </div>
+</body>
+</html>

@@ -1,0 +1,322 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="path-banner">
+    <strong>Active Vault Location:</strong> <code>{{ folder_path }}</code>
+</div>
+
+<!-- Integrated Comprehensive Dynamic Filter System Dashboard -->
+<div class="search-card" style="padding: 16px; margin-bottom: 20px; border-radius: 8px; background: var(--bg-card, #fff);">
+    <form method="GET" action="/" style="display: flex; gap: 12px; flex-wrap: wrap; margin: 0; width: 100%; align-items: center;">
+        <input type="text" name="search" value="{{ q }}" placeholder="Search names, syntax markers, tags..." style="flex: 2; min-width: 200px; margin: 0;">
+        
+        <select name="category_filter" style="flex: 1; min-width: 130px; padding: 10px; border-radius: 6px; border: 1px solid var(--border-color, #ccc); margin: 0;">
+            <option value="">All Categories</option>
+            {% for cat in categories %}
+                <option value="{{ cat }}" {% if category_filter == cat|lower %}selected{% endif %}>{{ cat }}</option>
+            {% endfor %}
+        </select>
+
+        <div style="display: inline-flex; align-items: center; gap: 6px; background: var(--bg-app); padding: 4px 10px; border-radius: 6px; border: 1px solid var(--border-color);">
+            <label style="font-size: 12px; margin: 0; font-weight: bold; color: var(--text-muted);">From:</label>
+            <input type="date" name="start_date" value="{{ start_date }}" style="border: none; background: transparent; padding: 4px; margin: 0; font-size: 13px; color: var(--text-main);">
+            
+            <label style="font-size: 12px; margin: 0; font-weight: bold; color: var(--text-muted);">To:</label>
+            <input type="date" name="end_date" value="{{ end_date }}" style="border: none; background: transparent; padding: 4px; margin: 0; font-size: 13px; color: var(--text-main);">
+        </div>
+
+        <button type="submit" class="btn-primary" style="width: auto; padding: 10px 20px; height: 40px; margin: 0; display: inline-flex; align-items: center; justify-content: center;" title="Search Vault">
+            <i data-lucide="search" style="width: 18px; height: 18px;"></i>
+        </button>
+        {% if q or category_filter or start_date or end_date %}
+            <a href="/" class="btn-reset" style="display: inline-flex; align-items: center; justify-content: center; text-decoration: none; padding: 0 15px; border-radius: 6px; background: #e2e8f0; color: #334155; height: 40px; margin: 0;" title="Reset Filters"><i class="fa-solid fa-rotate-left"></i></a>
+        {% endif %}
+    </form>
+</div>
+
+<div class="snippet-grid">
+    {% for item in snippets %}
+    <div class="snippet-card type-{{ item.content_type }}" data-type="{{ item.content_type }}">
+        <div class="snippet-top">
+            <div class="snippet-header">
+                <div class="snippet-title" style="width: 70%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                    <a class="snippet-title-link" onclick="openVaultModal('{{ item.title|js_escaped }}', this)">{{ item.title }}</a>
+                </div>
+                <!-- <span class="badge" data-cat="{{ item.category }}">{{ item.category }}</span> -->
+                <!-- Use this snippet below where you display the saved snippets (e.g., inside your cards or list) -->
+                <span class="badge" data-cat="{{ item.category }}">
+                    {% if item.category == 'Python' %}
+                        <!-- Python Logo -->
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+                    {% elif item.category == 'JavaScript' %}
+                        <!-- JS Logo Code Style -->
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M16 18l6-6-6-6M8 6l-6 6 6 6"></path></svg>
+                    {% elif item.category == 'SQL' %}
+                        <!-- Database Grid/Rows -->
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="3" y1="9" x2="21" y2="9"></line><line x1="3" y1="15" x2="21" y2="15"></line><line x1="9" y1="9" x2="9" y2="21"></line></svg>
+                    {% elif item.category == 'Terminal' %}
+                        <!-- Command Line prompt -->
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 17 10 11 4 5"></polyline><line x1="12" y1="19" x2="20" y2="19"></line></svg>
+                    {% elif item.category == 'HTML/CSS' %}
+                        <!-- Layout Layers -->
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 2 7 12 12 22 7 12 2"></polygon><polyline points="2 17 12 22 22 17"></polyline><polyline points="2 12 12 17 22 12"></polyline></svg>
+                    {% elif item.category == 'Markdown' %}
+                        <!-- Simple File text line layout -->
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+                    {% elif item.category == 'Prompt' %}
+                        <!-- Chat Bubble/AI Prompt spark concept -->
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+                    {% elif item.category == 'Scala' %}
+                        <!-- Layered upward chevrons -->
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="17 11 12 6 7 11"></polyline><polyline points="17 18 12 13 7 18"></polyline></svg>
+                    {% else %}
+                        <!-- General / Fallback Tag icon -->
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path><line x1="7" y1="7" x2="7.01" y2="7"></line></svg>
+                    {% endif %}
+                    <span>{{ item.category }}</span>
+                </span> 
+            </div>
+            
+            <!-- NEW: Metrics Info Tracking Line Block -->
+            <div class="metrics-bar" style="display: flex; gap: 16px; font-size: 12px; color: var(--text-muted); border-bottom: 1px dashed var(--border-color); padding-bottom: 8px; margin-bottom: 12px;">
+                <span class="metric-item" style="display: inline-flex; align-items: center; gap: 4px;">
+                    <i data-lucide="align-left" style="width: 14px; height: 14px;"></i> {{ item.char_count }} chars
+                </span>
+                <span class="metric-item" style="display: inline-flex; align-items: center; gap: 4px;">
+                    <i data-lucide="type" style="width: 14px; height: 14px;"></i> {{ item.word_count }} words
+                </span>
+                {% if item.pinned %}
+                    <span class="metric-item" style="color: #ef4444; margin-left: auto; display: inline-flex; align-items: center; gap: 4px;">
+                        <i data-lucide="pin" style="width: 14px; height: 14px;"></i> Pinned
+                    </span>
+                {% endif %}
+            </div>
+
+
+            <div class="markdown-preview-render-box">
+                {{ item.html | safe }}
+            </div>
+            
+            <div class="hidden-rich-markup-payload" style="display: none;">{{ item.html | safe }}</div>
+            <div class="hidden-raw-plain-payload" style="display: none;">{{ item.content }}</div>
+        </div>
+        
+        <!-- Action Row using Flat SVG icon button links -->
+        <div style="margin-top: 15px; display: flex; gap: 8px; justify-content: flex-end;">
+            <a class="icon-btn" href="{{ url_for('vault.toggle_pin', filename=item.filename) }}" title="Toggle Pin">
+                <i data-lucide="pin" style="width: 16px; height: 16px;"></i>
+            </a>
+            <button class="icon-btn" onclick="copySnippetClean(this)" title="Copy Content">
+                <i data-lucide="copy" style="width: 16px; height: 16px;"></i>
+                <span class="hidden-raw-payload" style="display:none;">{{ item.content }}</span>
+            </button>
+            <a class="icon-btn" href="{{ url_for('vault.entry_page', filename=item.filename) }}" title="Edit">
+                <i data-lucide="edit-3" style="width: 16px; height: 16px;"></i>
+            </a>
+            <a class="icon-btn" href="{{ url_for('vault.delete_snippet', filename=item.filename) }}" onclick="return confirm('Delete permanently?')" title="Delete" style="color: var(--danger); border-color: rgba(239,68,68,0.2);">
+                <i data-lucide="trash-2" style="width: 16px; height: 16px;"></i>
+            </a>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+<!-- UNIVERSAL INTERACTIVE MODAL OVERLAY -->
+<div id="vaultModal" class="vault-modal-overlay" onclick="closeVaultModal(event)">
+    <div class="vault-modal-window">
+        <div class="vault-modal-header">
+            <h3 id="modalTitle" style="margin:0;">View Snippet</h3>
+            <div style="display: flex; gap: 8px; align-items: center;">
+                <button id="modalMasterCopyBtn" class="icon-btn" title="Copy Content text">
+                    <i data-lucide="copy" style="width: 16px; height: 16px;"></i>
+                </button>
+                <button class="btn-black-close" onclick="forceCloseModal()" style="background-color: #000; color: #fff; width: 34px; height: 34px; border-radius: 6px; border: none; cursor: pointer; display: inline-flex; align-items: center; justify-content: center;">
+                    <i data-lucide="x" style="width: 16px; height: 16px;"></i>
+                </button>
+            </div>
+        </div>
+        <div id="modalBody" class="vault-modal-body"></div>
+    </div>
+</div>
+
+{% if total_pages > 1 %}
+<nav class="pagination-nav" aria-label="Vault Pagination">
+    <div class="pagination-container">
+        
+        <!-- Previous Button -->
+        {% if page > 1 %}
+        <a class="page-btn" 
+           href="{{ url_for('vault.index', page=page-1, search=q, category_filter=category_filter, start_date=start_date, end_date=end_date) }}"
+           aria-label="Previous Page">
+            <i class="fa-solid fa-chevron-left" aria-hidden="true"></i>
+            <span>Previous</span>
+        </a>
+        {% else %}
+        <span class="page-btn disabled" aria-disabled="true">
+            <i class="fa-solid fa-chevron-left" aria-hidden="true"></i>
+            <span>Previous</span>
+        </span>
+        {% endif %}
+
+        <!-- Middle Info Tracking Badge -->
+        <div class="page-indicator">
+            <span class="current-page">{{ page }}</span>
+            <span class="page-divider">/</span>
+            <span class="total-pages">{{ total_pages }}</span>
+        </div>
+
+        <!-- Next Button -->
+        {% if page < total_pages %}
+        <a class="page-btn" 
+           href="{{ url_for('vault.index', page=page+1, search=q, category_filter=category_filter, start_date=start_date, end_date=end_date) }}"
+           aria-label="Next Page">
+            <span>Next</span>
+            <i class="fa-solid fa-chevron-right" aria-hidden="true"></i>
+        </a>
+        {% else %}
+        <span class="page-btn disabled" aria-disabled="true">
+            <span>Next</span>
+            <i class="fa-solid fa-chevron-right" aria-hidden="true"></i>
+        </span>
+        {% endif %}
+
+    </div>
+</nav>
+
+{% endif %}
+
+<script>
+    // Holds text string memory for active modal copying
+    var activeModalRawContent = "";
+
+    // 1. Copies clean snippet text, stripping out markdown layout backticks completely
+    function copySnippetClean(btn) {
+        const rawText = btn.querySelector('.hidden-raw-payload').innerText;
+        navigator.clipboard.writeText(rawText).then(() => {
+            const oldInner = btn.innerHTML; 
+            btn.innerHTML = '<i class="fa-solid fa-check"></i>';
+            setTimeout(() => btn.innerHTML = oldInner, 1500);
+        });
+    }
+
+    // 2. Individual code block copy button action listener
+    function copyBlockRaw(text, btn) {
+        const textarea = document.createElement('textarea');
+        textarea.innerHTML = text;
+        const decodedText = textarea.value;
+
+        navigator.clipboard.writeText(decodedText).then(() => {
+            const oldInner = btn.innerHTML;
+            btn.innerHTML = '<i class="fa-solid fa-check"></i> Copied';
+            setTimeout(() => btn.innerHTML = oldInner, 1500);
+        });
+    }
+
+    // 3. Modal view injection script
+    function openVaultModal(title, element) {
+        const cardParent = element.closest('.snippet-card');
+        const formattedContentHtml = cardParent.querySelector('.hidden-rich-markup-payload').innerHTML;
+        
+        // Retrieve pure plain text payload data for the modal master copy button action row
+        activeModalRawContent = cardParent.querySelector('.hidden-raw-plain-payload').innerText;
+        
+        document.getElementById('modalTitle').innerText = title;
+        document.getElementById('modalBody').innerHTML = formattedContentHtml;
+        
+        // Fluid dark/light theme setting window transitions selector block
+        var activeTheme = document.documentElement.getAttribute('data-theme') || 'light';
+        var modalWindow = document.querySelector('.vault-modal-window');
+        if(activeTheme === 'dark') {
+            modalWindow.style.backgroundColor = '#1e293b';
+            modalWindow.style.color = '#f8fafc';
+        } else {
+            modalWindow.style.backgroundColor = '#ffffff';
+            modalWindow.style.color = '#0f172a';
+        }
+
+        document.getElementById('vaultModal').classList.add('active');
+        setTimeout(() => { lucide.createIcons(); }, 10);
+    }
+
+
+    // 4. Modal Copy Click Trigger Engine Action Hook
+    document.getElementById('modalMasterCopyBtn').addEventListener('click', function() {
+        var btn = this;
+        navigator.clipboard.writeText(activeModalRawContent).then(() => {
+            const oldInner = btn.innerHTML;
+            btn.innerHTML = '<i class="fa-solid fa-check"></i> Copied';
+            setTimeout(() => btn.innerHTML = oldInner, 1500);
+        });
+    });
+        
+    // 5. Close Modal via background click outside the content container
+    function closeVaultModal(e) {
+        if(e.target.id === 'vaultModal') forceCloseModal();
+    }
+    
+    // 6. Direct Close Action
+    function forceCloseModal() {
+        document.getElementById('vaultModal').classList.remove('active');
+    }
+    
+    // 7. Escape Key listener to shut down open modal views instantly
+    document.addEventListener('keydown', function(e) {
+        if (e.key === "Escape") forceCloseModal();
+    });
+
+    // 8. Dynamic List Bullet Item Icon Injection System 
+    function processDynamicListIcons(containerElement) {
+        // Target all standard list items inside the markdown preview blocks
+        const listItems = containerElement.querySelectorAll('.markdown-preview-render-box li');
+        
+        listItems.forEach(li => {
+            const originalText = li.innerHTML.trim();
+            let iconName = "arrow-right"; // Default fallback slick clean vector arrow
+            let iconColor = "var(--text-muted)";
+
+            // Pattern Matching Keyword Engine (Matches format strings like "Warning: context")
+            if (/^(&lt;strong&gt;)?(warning|alert|danger|error)/i.test(originalText)) {
+                iconName = "alert-triangle";
+                iconColor = "#ef4444"; // Vivid Alert Crimson
+            } else if (/^(&lt;strong&gt;)?(check|success|done|pass|save)/i.test(originalText)) {
+                iconName = "check-circle-2";
+                iconColor = "#10b981"; // Document Success Emerald Green
+            } else if (/^(&lt;strong&gt;)?(info|note|tip|idea|prompt)/i.test(originalText)) {
+                iconName = "info";
+                iconColor = "#3b82f6"; // Sapphire Info Tracking Tint
+            } else if (/^(&lt;strong&gt;)?(code|syntax|git|config)/i.test(originalText)) {
+                iconName = "terminal";
+                iconColor = "#64748b"; // Steel Slate
+            }
+
+            // If the list item hasn't been transformed yet, update its layout structure
+            if (!li.querySelector('.lucide-list-icon')) {
+                // Wipe native browser bullet formatting markers using inline CSS
+                li.style.listStyleType = 'none';
+                li.style.position = 'relative';
+                li.style.paddingLeft = '24px';
+                li.style.marginLeft = '-20px';
+
+                // Prepend our dynamic vector metadata tracking icon placeholder block
+                li.innerHTML = `<i data-lucide="${iconName}" class="lucide-list-icon" style="position: absolute; left: 0; top: 3px; width: 15px; height: 15px; color: ${iconColor};"></i>${li.innerHTML}`;
+            }
+        });
+        
+        // Re-trigger the global core rendering pipeline to instantly parse new icon variables
+        lucide.createIcons();
+    }
+
+    // Hook our parsing scanner straight into the main page lifecycle event system
+    document.addEventListener("DOMContentLoaded", function() {
+        processDynamicListIcons(document.body);
+    });
+
+    // Also update our openVaultModal() function to run the scanner when modals pop open
+    const originalOpenModal = openVaultModal;
+    openVaultModal = function(title, element) {
+        originalOpenModal(title, element);
+        // Scan newly generated layout inside the overlay modal container window context
+        processDynamicListIcons(document.getElementById('modalBody'));
+    };
+
+</script>
+{% endblock %}

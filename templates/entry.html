@@ -1,0 +1,119 @@
+{% extends 'base.html' %}
+{% block content %}
+<!-- Load CodeMirror Core Assets via CDNJS -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.12/codemirror.min.css" crossorigin="anonymous" referrerpolicy="no-referrer" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.12/theme/nord.min.css" crossorigin="anonymous" referrerpolicy="no-referrer" />
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.12/codemirror.min.js" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+
+<!-- Load CodeMirror Language Plugins via CDNJS -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.12/mode/markdown/markdown.min.js" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.12/mode/javascript/javascript.min.js" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.12/mode/python/python.min.js" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.12/mode/css/css.min.js" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.12/mode/xml/xml.min.js" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+
+<!-- NEW: Auto-Close Brackets Addon & Client-Side Marked Live Parser Engine -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.12/addon/edit/closebrackets.min.js" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<!-- <script src="https://cdn.jsdelivr.net/npm/marked@18.0.6/lib/marked.umd.js" crossorigin="anonymous" referrerpolicy="no-referrer"></script> -->
+
+<style>
+    /* Full-width editor layout specifications */
+    .CodeMirror {
+        border: 1px solid var(--border-color) !important;
+        border-radius: 6px;
+        height: 520px !important;
+        font-family: 'Courier New', Courier, monospace;
+        font-size: 14px;
+        background-color: var(--bg-card) !important;
+        color: var(--text-main) !important;
+        margin-bottom: 16px;
+    }
+    .CodeMirror-gutter { background-color: var(--bg-app) !important; border-right: 1px solid var(--border-color) !important; }
+    .CodeMirror-linenumbers { color: var(--text-muted) !important; }
+    .cm-s-nord.CodeMirror { background: #2e3440 !important; color: #d8dee9 !important; }
+</style>
+
+<div class="form-wrapper" style="max-width: 100%;">
+    <div class="card">
+        <h3 style="margin-bottom: 15px; display: flex; align-items: center; gap: 8px;">
+            <i data-lucide="file-text"></i> {% if snippet %}Modify Existing{% else %}Forge New{% endif %} Vault Entry
+        </h3>
+        <form id="entryForm" action="/save" method="POST">
+            {% if snippet %}
+                <input type="hidden" name="old_filename" value="{{ snippet.filename }}">
+                <input type="hidden" name="pinned" value="{{ 'true' if snippet.pinned else 'false' }}">
+                <input type="hidden" name="created_time" value="{{ snippet.created }}">
+            {% endif %}
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
+                <div>
+                    <label for="title">Title / Identifier</label>
+                    <input type="text" id="title" name="title" value="{{ snippet.title if snippet else '' }}" placeholder="e.g., Snippet Core Templates" required style="margin:0;">
+                </div>
+                <div>
+                    <label for="category">Category Type Selection</label>
+                    <select id="category" name="category" style="margin:0;">
+                        {% for cat in ['General', 'Prompt', 'Markdown', 'Python', 'Scala', 'JavaScript', 'SQL', 'Terminal', 'HTML/CSS'] %}
+                            <option value="{{ cat }}" {% if snippet and snippet.category == cat %}selected{% endif %}>{{ cat }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+            <label for="content">Snippet / code box</label>
+            <div style="width: 100%;">
+                <!-- FIXED: Removed 'required' attribute here to bypass browser focus exceptions -->
+                <textarea id="content" name="content">{{ snippet.content if snippet else '' }}</textarea>
+            </div>
+
+            <div class="form-actions">
+                <button type="submit" class="btn-submit">
+                    <i data-lucide="save" style="width: 16px; height: 16px;"></i> Save Snippet
+                </button>
+                <a href="{{ url_for('vault.index') }}" class="btn-cancel">
+                    <i data-lucide="ban" style="width: 16px; height: 16px;"></i> Cancel
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    var editor = CodeMirror.fromTextArea(document.getElementById("content"), {
+        lineNumbers: true,
+        mode: "markdown",
+        theme: "nord",
+        lineWrapping: true,
+        autoCloseBrackets: true,
+        viewportMargin: Infinity
+    });
+
+    function updateEditorMode(value) {
+        var cat = value.toLowerCase();
+        if (cat.includes('python')) editor.setOption("mode", "python");
+        else if (cat.includes('javascript')) editor.setOption("mode", "javascript");
+        else if (cat.includes('html') || cat.includes('css')) editor.setOption("mode", "css");
+        else editor.setOption("mode", "markdown");
+    }
+
+    updateEditorMode(document.getElementById('category').value);
+    document.getElementById('category').addEventListener('change', function() {
+        updateEditorMode(this.value);
+    });
+
+    // FIXED: Smart custom validation listener loop
+    document.getElementById('entryForm').addEventListener('submit', function(e) {
+        // Sync CodeMirror content memory back to native field
+        editor.save();
+        
+        // Custom check to catch empty inputs cleanly
+        if (!editor.getValue().trim()) {
+            e.preventDefault(); // Stop form submission
+            alert("The snippet box cannot be completely empty!");
+            editor.focus();
+        }
+    });
+
+    // Re-initialize Lucide elements after rendering completes
+    setTimeout(() => { lucide.createIcons(); }, 20);
+</script>
+{% endblock %}
